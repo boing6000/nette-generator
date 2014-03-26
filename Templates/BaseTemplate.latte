@@ -1,0 +1,32 @@
+{syntax double}{{var $prefix = 'n:'}}<!DOCTYPE html>
+<html xmlns='http://www.w3.org/1999/xhtml' lang='cs'>
+    <head>
+        <meta charset='UTF-8' />
+        <meta name='author' content='Radek Brůha' />
+        <meta name='description' content=''>
+		<meta name='keywords' content=''>
+		<meta name='robots' content='index, FOLLOW' />
+		<title>{block title /} | Nette Generator 1.0</title>
+		<link rel='shortcut icon' href='{$basePath}/images/icon.ico' />
+		<link type='text/css' rel='stylesheet' href='{$basePath}/css/main.css' media='all' />
+	</head>
+	<body>
+		<section>
+			{include #content}
+		</section>
+		<nav class='left'>
+			<h2>Seznam tabulek:</h2>
+			<ul>
+			{{foreach $tables as $table}}
+				<li><a {{$prefix|noescape}}href='{{$table->presenter}}:list'>{{$table->name}}</a></li>
+			{{/foreach}}
+			</ul>
+		</nav>
+		<script src='{$basePath}/js/jquery.min.js'></script>
+		<script src='{$basePath}/js/jquery.fancybox.min.js'></script>
+        <script src='{$basePath}/js/nette.ajax.js'></script>
+        <script src='{$basePath}/js/confirm.ajax.js'></script>
+        <script src='{$basePath}/js/netteForms.js'></script>
+        <script src='{$basePath}/js/main.js'></script>
+	</body>
+</html>

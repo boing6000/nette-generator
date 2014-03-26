@@ -1,0 +1,4 @@
+{syntax double}{{var $prefix = 'n:'}}<form class='form' {{$prefix|noescape}}name='form' {{$prefix|noescape}}inner-foreach='$form->controls as $input'>
+	{input $input}<a {{$prefix|noescape}}ifset='$input->control->attrs["readonly"]' onClick='openItemSelect({plink $input->control->attrs["data-table"] input => $input->name})'>Open</a>
+</form>
+<script type='text/javascript'>function openItemSelect(page) { window.open(page); }</script> 

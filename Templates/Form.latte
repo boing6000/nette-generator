@@ -1,0 +1,16 @@
+{syntax double}protected function createComponentForm() {
+		$form = new Form();
+		$form->addHidden('{{$primary}}', $this->id);
+		$form->addHidden('page', $this->page);
+		$form->addHidden('orderBy', $this->orderBy);
+		$form->addHidden('orderHow', $this->orderHow);
+		$form->addHidden('search', $this->search);
+		$form->addHidden('input', $this->input);
+		{{foreach $inputs as $input}}
+		$form{{$input|noescape}}
+		{{/foreach}}
+		$form->addSubmit('send', 'Uložit položku');
+		$form->onSuccess[] = $this->formSubmit;
+		if ($this->id) $form->setDefaults($this->repository->get($this->id));    
+		return $form;
+	}

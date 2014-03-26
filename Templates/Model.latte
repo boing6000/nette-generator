@@ -1,0 +1,8 @@
+{syntax double}{{$php|noescape}}
+namespace App{{$moduleName}}\Models;
+
+class {{$modelName}}Repository extends BaseRepository {
+	public function __construct($table, $itemsPerPage, \Nette\Database\Context $database) {
+		parent::__construct($table, $itemsPerPage, $database);
+	}
+}

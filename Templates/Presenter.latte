@@ -1,0 +1,10 @@
+{syntax double}{{$php|noescape}}
+namespace App{{$moduleName}}\Presenters;
+use Nette\Application\UI\Form;
+
+class {{$presenterName}}Presenter extends BasePresenter {
+	/** @var \App{{$moduleName}}\Models\{{$presenterName}}Repository @inject */
+	public $repository;
+	
+	{{$form|noescape}}
+}
