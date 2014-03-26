@@ -1,0 +1,5 @@
+{
+    "name": "nette-generator",
+    "require": { "php": ">=5.4.0" },
+    "require-dev": { "php": ">=5.4.0" }
+}
