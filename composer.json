@@ -1,5 +1,5 @@
 {
-    "name": "nette/generator",
+    "name": "bruha/nette-generator",
     "require": {
 		"php": ">=5.4.0",
 		"nette/sandbox": "@dev"
