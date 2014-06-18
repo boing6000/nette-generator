@@ -2,12 +2,12 @@
     "name": "r-bruha/nette-generator",
     "require": {
 		"php": ">=5.4.0",
-		"nette/sandbox": "2.2.*",
-		"kdyby/doctrine": "2.1.*"
+		"nette/sandbox": "2.2.*@dev",
+		"kdyby/doctrine": "2.1.*@dev"
 	},
     "require-dev": {
 		"php": ">=5.4.0",
-		"nette/sandbox": "2.2.*",
-		"kdyby/doctrine": "2.1.*"
+		"nette/sandbox": "2.2.*@dev",
+		"kdyby/doctrine": "2.1.*@dev"
 	}
 }
