@@ -1,11 +1,3 @@
 {
-    "name": "r-bruha/nette-generator",
-    "require": {
-		"php": ">=5.4.0",
-		"nette/sandbox": "2.2.*"
-	},
-    "require-dev": {
-		"php": ">=5.4.0",
-		"nette/sandbox": "2.2.*"
-	}
+    "name": "r-bruha/nette-generator"
 }
