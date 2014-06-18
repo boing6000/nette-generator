@@ -1,3 +1,11 @@
 {
-    "name": "r-bruha/nette-generator"
+    "name": "r-bruha/nette-generator",
+    "require": {
+		"php": ">=5.4.0",
+		"kdyby/doctrine": "~2.0"
+	},
+    "require-dev": {
+		"php": ">=5.4.0",
+		"kdyby/doctrine": "~2.0"
+	}
 }
