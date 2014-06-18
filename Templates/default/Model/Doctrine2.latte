@@ -1,0 +1,8 @@
+{syntax double}{{$phpTag|noescape}}
+namespace App{{$moduleName}}\Models;
+
+class {{$modelName}}Repository extends BaseRepository {
+	public function __construct($itemsPerPage, \Kdyby\Doctrine\EntityManager $em) {
+		parent::__construct($itemsPerPage, $em);
+	}
+}

@@ -1,31 +1,20 @@
-<?php
-namespace Builder;
-
+<?php namespace Builder;
 /**
- * BasePresenter building class
+ * Base presenter building class
  * @author Radek Brůha
- * @version 1.0
+ * @version 1.1
  */
-class BasePresenter {
-	private $template;
-	private $path;
-	
-	/** @param string $path Path to Nette app folder */
-	public function __construct($path = '\..\..\..\..\app') {
-		$this->template = new \Nette\Templating\FileTemplate(__DIR__ . '\..\Templates\BasePresenter.latte');
-		$this->template->registerFilter(new \Nette\Latte\Engine);
-		$this->path = __DIR__ . $path;
-		$this->template->php = '<?php';
-	}
-	
+class BasePresenter extends Base {
 	/**
 	 * Build and save base presenter
-	 * @param string $moduleName Module name
+	 * @param \stdClass $settings
+	 * @throws \FileException
 	 */
-	public function build($moduleName) {
-		$path = $moduleName ? "$this->path\\{$moduleName}Module\presenters\BasePresenter.php" : "$this->path\presenters\BasePresenter.php";
-		if (!is_dir(dirname($path))) if (!mkdir(dirname($path), 0777, TRUE)) throw new \FileException("Cannot create path $path.");
-		$this->template->moduleName = $moduleName ? "\\{$moduleName}Module" : NULL;
-		$this->template->save($path);
+	public function build(\stdClass $settings) {
+		$this->sourcePath = "\\..\\Templates\\$settings->templateName\\Presenter\\BasePresenter.latte";
+		$this->destinationPath = $settings->moduleName ? __DIR__ . "\\$this->projectPath\\{$settings->moduleName}Module\\presenters\\BasePresenter.php" : __DIR__ . "\\$this->projectPath\\presenters\\BasePresenter.php";
+		if (!is_dir(dirname($this->destinationPath))) if (!mkdir(dirname($this->destinationPath), 0777, TRUE)) throw new \FileException("Cannot create path $this->destinationPath.");
+		$this->params['moduleName'] = $settings->moduleName ? "\\{$settings->moduleName}Module" : NULL;
+		$this->saveTemplate();
 	}
 }

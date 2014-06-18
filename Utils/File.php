@@ -1,12 +1,11 @@
-<?php
-namespace Utils;
-
+<?php namespace Utils;
 /**
  * File operation class
  * @author Radek Brůha
  * @version 1.0
  */
 class File {
+
 	/**
 	 * Read content of file
 	 * @param string $source File source
@@ -20,10 +19,10 @@ class File {
 				if ($content = fread($file, filesize($source))) {
 					if (fclose($file)) {
 						return $content;
-					} else { throw new \FileException("Cannot close file $source."); }
-				} else { throw new \FileException("Cannot read file $source."); }
-			} else { throw new \FileException("Cannot open file $source."); }
-		} else { throw new \FileException("Cannot find file $source."); }
+					} else throw new \FileException("Cannot close file $source.");
+				} else throw new \FileException("Cannot read file $source.");
+			} else throw new \FileException("Cannot open file $source.");
+		} else throw new \FileException("Cannot find file $source.");
 	}
 
 	/**
@@ -40,11 +39,11 @@ class File {
 			if (fwrite($file, $content)) {
 				if (fclose($file)) {
 					return TRUE;
-				} else { throw new \FileException("Cannot close file $destination."); }
-			} else { throw new \FileException("Cannot write file $destination."); }
-		} else { throw new \FileException("Cannot find file $destination."); }
+				} else throw new \FileException("Cannot close file $destination.");
+			} else throw new \FileException("Cannot write file $destination.");
+		} else throw new \FileException("Cannot find file $destination.");
 	}
-	
+
 	/**
 	 * Copy all files and directories within directory to another directory
 	 * @param string $source Source directory path
@@ -61,12 +60,24 @@ class File {
 				echo PHP_EOL . '    => ' . realpath($path);
 			} else {
 				$path = $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
-				if (!copy($item, $path)) throw new \FileException("    => Cannot create file $path.");		
+				if (!copy($item, $path)) throw new \FileException("    => Cannot create file $path.");
 				echo PHP_EOL . '    => ' . realpath($path);
 			}
 		}
 	}
-	
+
+	/**
+	 * Get all files within directory
+	 * @param string $source Source directory path
+	 * @return array
+	 * @static
+	 */
+	public static function getDirectoryFiles($source) {
+		$files = array();
+		foreach (new \DirectoryIterator($source) as $file) if ($file->isFile()) $files[] = $file->getFilename();
+		return $files;
+	}
+
 	/**
 	 * Clean Nette Framework cache directories and files
 	 * @param string $path Cache location
@@ -77,8 +88,9 @@ class File {
 		$path = realpath($path) !== FALSE ? realpath($path) : $path;
 		if (is_dir($path)) {
 			foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $file) {
-				if ($file->isDir()) { if (!rmdir($file->getRealPath())) throw new \FileException('    => Cannot remove directory ' . $file->getRealPath() . '.');	
-				} else { if (!unlink($file->getRealPath())) throw new \FileException('    => Cannot remove file ' . $file->getRealPath() . '.'); }
+				if ($file->isDir()) {
+					if (!rmdir($file->getRealPath())) throw new \FileException('    => Cannot remove directory ' . $file->getRealPath() . '.');
+				} else if (!unlink($file->getRealPath())) throw new \FileException('    => Cannot remove file ' . $file->getRealPath() . '.');
 			}
 			if (!rmdir($path)) throw new \FileException("    => Cannot remove directory $path.");
 		}

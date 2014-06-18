@@ -1,29 +1,29 @@
-<?php
-namespace Builder;
-
+<?php namespace Builder;
 /**
- * Config building class
+ * Nette Framework 2.2.X config building class
  * @author Radek Brůha
- * @version 1.0
+ * @version 1.1
  */
-class Config {
-	private $template;
-
-	/** @param array $tables Database tables */
-	public function __construct() {
-		$this->template = \Utils\File::read(__DIR__ . '\..\..\..\..\app\config\config.neon');
-	}
-
-	/** @return string Config */
-	public function build($moduleName, $tables) {
-		$services = 'router: @App\Routers\RouterFactory::createRouter' . PHP_EOL;
+class Config extends Base {
+	/**
+	 * Build and save Nette Framework 2.2.X config
+	 * @param array of \Utils\Object\Table $tables
+	 * @param \stdClass $settings
+	 */
+	public function build(array $tables, \stdClass $settings) {
+		$config = (new \Nette\Neon\Decoder())->decode(\Utils\File::read(__DIR__ . "\\$this->projectPath\\config\config.neon"));
+		$services = $config['services'];
+		foreach ($tables as $table) foreach ($services as $serviceKey => $serviceValue) if (is_object($serviceValue)) if (strpos($serviceValue->value, $table->sanitizedName)) unset($services[$serviceKey]);
 		foreach ($tables as $table) {
-			$service = $moduleName ?
-				"	- \App\\{$moduleName}Module\Models\\" . implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $table->name))) . "Repository('$table->name', %application.itemsPerPage%)" :
-				"	- \App\Models\\" . implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $table->name))) . "Repository('$table->name', %application.itemsPerPage%)";	
-				if (strpos($this->template, $service) === FALSE)
-				$services .= $service . PHP_EOL;
+			if ($settings->what === 1) {
+				$serviceName = $settings->moduleName ? "\App\\{$settings->moduleName}Module\Models\\{$table->sanitizedName}Repository" : "\App\Models\\{$table->sanitizedName}Repository";
+				$services[$table->sanitizedName] = new \Nette\Neon\Entity($serviceName, [$table->name, '%application.itemsPerPage%']);
+			} else {
+				$serviceName = $settings->moduleName ? "\App\\{$settings->moduleName}Module\Models\\{$table->sanitizedName}Repository" : "\App\Models\\{$table->sanitizedName}Repository";
+				$services[$table->sanitizedName] = new \Nette\Neon\Entity($serviceName, ['%application.itemsPerPage%']);
+			}
 		}
-		\Utils\File::write(__DIR__ . '\..\..\..\..\app\config\config.neon', str_replace('router: @App\Routers\RouterFactory::createRouter', $services, $this->template));
+		$config['services'] = $services;
+		\Utils\File::write(__DIR__ . "\\$this->projectPath\\config\config.neon", (new \Nette\Neon\Encoder)->encode($config, \Nette\Neon\Encoder::BLOCK));
 	}
 }

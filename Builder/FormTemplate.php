@@ -1,30 +1,20 @@
-<?php
-namespace Builder;
-
+<?php namespace Builder;
 /**
  * Form template building class
  * @author Radek Brůha
- * @version 1.0
+ * @version 1.1
  */
-class FormTemplate {
-    private $template;
-	private $path;
-    
-    /** @param string $path Path to Nette app folder */
-	public function __construct($path = '\..\..\..\..\app') {
-		$this->template = new \Nette\Templating\FileTemplate(__DIR__ . '\..\Templates\FormTemplate.latte');
-		$this->template->registerFilter(new \Nette\Latte\Engine);
-		$this->path = __DIR__ . $path;
-	}
-
+class FormTemplate extends Base {
 	/**
 	 * Build and save form template
-	 * @param string $templateName Template name
-	 * @param string $moduleName Module name
+	 * @param \Utils\Object\Table $table
+	 * @param \stdClass $settings
+	 * @throws \FileException
 	 */
-	public function build($templateName, $moduleName) {
-		$path = $moduleName ? "$this->path\\{$moduleName}Module\\templates\\{$templateName}\\form.latte" : "$this->path\\templates\\{$templateName}\\form.latte";
-		if (!is_dir(dirname($path))) if (!mkdir(dirname($path), 0777, TRUE)) throw new \FileException("Cannot create path $path.");
-		$this->template->save($path);
+	public function build(\Utils\Object\Table $table, \stdClass $settings) {
+		$this->sourcePath = "\\..\\Templates\\$settings->templateName\\Template\\FormTemplate.latte";
+		$this->destinationPath = $settings->moduleName ? __DIR__ . "\\$this->projectPath\\{$settings->moduleName}Module\\templates\\{$table->sanitizedName}\\form.latte" : __DIR__ . "\\$this->projectPath\\templates\\{$table->sanitizedName}\\form.latte";
+		if (!is_dir(dirname($this->destinationPath))) if (!mkdir(dirname($this->destinationPath), 0777, TRUE)) throw new \FileException("Cannot create path $this->destinationPath.");
+		$this->saveTemplate();
 	}
 }

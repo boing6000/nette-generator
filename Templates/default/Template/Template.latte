@@ -1,0 +1,42 @@
+{syntax double}{block tableName}{{$table->comment ? $table->comment : $table->name}}{/block}
+{block table}
+<table l:snippet='table' class='table table-striped'>
+	<thead>
+		<tr>
+		{{foreach $table->columns as $column}}
+			<th><a class='ajax' l:href='list $id, $page, "{{$column->name}}", $orderBy === "{{$column->name}}" ? $orderHowReverse : $orderHow, $search, $input'><img l:if='$orderBy === "{{$column->name}}"' src='{$basePath}/images/order_{$orderHow}.png' alt='{$orderHow}' />{{$column->comment ? $column->comment : $column->name}}</a></th>
+		{{/foreach}}
+			<th class='img'><a class='modal-window fancybox.ajax btn btn-xs btn-success' l:href='form NULL, $input'>Přidat</a></th>
+		</tr>
+	</thead>
+	<tbody l:if='count($items)'>
+		<tr l:foreach='$items as $i'>
+		<td n:foreach='$table->columns as $column' class='col-md-1'>{$i->{{($column->foreignName ? $column->foreignName : $column->name)|noescape}}{{if $column->type->name === 'datetime' || $column->type->name === 'timestamp'}}->format('d. m. Y H:i:s'){{elseif $column->type->name === 'date'}}->format('d. m. Y'){{elseif $column->type->name === 'time'}}->format('d. m. Y H:i:s'){{/if}}}</td>
+		<td l:if='!$input'>
+				<a class='modal-window fancybox.ajax btn btn-xs btn-warning' l:href='form $i->{{$primaryKey|noescape}}, $input'>Upravit</a>
+				<a class='ajax btn btn-xs btn-danger' l:href='delete $i->{{$primaryKey|noescape}}, $page, $orderBy, $orderHow, $search' data-confirm='Opravdu chcete smazat tuto položku?'>Smazat</a>
+			</td>
+			<td l:if='$input'><a href='#' class='btn btn-xs btn-success' onClick='selectItem({$i->{{$primaryKey|noescape}}})'>Vybrat</a></td>
+		</tr>
+	</tbody>
+	<tfoot l:if='count($items)'>
+		<tr>
+			<td class='text-center' colspan='{{count($table->columns) + 1}}'>
+				<ul l:snippet='pagination' class='pagination pagination-sm'>
+					<li><a class='ajax' l:href='list $id, 1, $orderBy, $orderHow, $search, $input'>První strana</a></li>		
+					<li l:class='$i === $page ? active' l:for='$i = $page - $pageLimit <= 1 ? 1 : $page - $pageLimit; $i <= ($page + $pageLimit <= $pagesCount ? $page + $pageLimit : $pagesCount); $i++'><a class='ajax' l:href='list $id, $i, $orderBy, $orderHow, $search, $input'>{$i}</a></li>
+					<li><a class='ajax' l:href='list $id, $pagesCount, $orderBy, $orderHow, $search, $input'>Poslední strana</a></li>
+				</ul>
+			</td>
+		</tr>
+	</tfoot>
+</table>
+
+			
+<script type='text/javascript'>
+	function selectItem(id) {
+		$('#frm-form-{$input|noescape}', window.opener.document).val(id);
+		self.close();
+}
+</script>
+{/block}

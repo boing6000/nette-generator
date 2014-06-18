@@ -1,34 +1,20 @@
-<?php
-namespace Builder;
-
+<?php namespace Builder;
 /**
- * BaseTemplate building class
+ * Base template building class
  * @author Radek Brůha
- * @version 1.0
+ * @version 1.1
  */
-class BaseTemplate {
-    private $template;
-	private $path;
-    
-    /** @param string $path Path to Nette app folder */
-	public function __construct($path = '\..\..\..\..\app') {
-		$this->template = new \Nette\Templating\FileTemplate(__DIR__ . '\..\Templates\BaseTemplate.latte');
-		$this->template->registerFilter(new \Nette\Latte\Engine);
-		$this->path = __DIR__ . $path;
-	}
-
+class BaseTemplate extends Base {
 	/**
 	 * Build and save base template
-	 * @param string $tables Database tables
+	 * @param array of \Utils\Object\Table $tables
+	 * @throws \FileException
 	 */
-	public function build($tables) {
-		$this->template->tables = array();
-		foreach ($tables as $table) {
-			$newTable = new \stdClass();
-			$newTable->presenter = implode('', array_map(function($value) { return ucfirst($value); }, explode('_', $table->name)));
-			$newTable->name = $table->comment ? $table->comment : $table->name;
-			$this->template->tables[] = $newTable;
-		}
-		$this->template->save("$this->path\\templates\@layout.latte");
+	public function build(array $tables, \stdClass $settings) {
+		$this->sourcePath = "\\..\\Templates\\$settings->templateName\\Template\\BaseTemplate.latte";
+		$this->destinationPath = __DIR__ . "\\$this->projectPath\\templates\@layout.latte";
+		if (!is_dir(dirname($this->destinationPath))) if (!mkdir(dirname($this->destinationPath), 0777, TRUE)) throw new \FileException("Cannot create path $this->destinationPath.");
+		$this->params['tables'] = $tables;
+		$this->saveTemplate();
 	}
 }

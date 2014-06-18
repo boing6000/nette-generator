@@ -1,0 +1,121 @@
+{syntax double}{{$phpTag|noescape}}
+namespace App{{$moduleName}}\Models;
+
+class BaseRepository extends \Nette\Object {
+	/** @var \Kdyby\Doctrine\EntityManager */
+	protected $entityManager;
+	/** @var Kdyby\Doctrine\EntityDao */
+	protected $dataAccessObject;
+	/** @var string */
+	protected $className, $fullClassName;
+	/** @var int */
+	protected $itemsPerPage;
+
+	public function __construct($itemsPerPage, \Kdyby\Doctrine\EntityManager $entityManager) {
+		$this->className = str_replace('Repository', '', explode('\\', get_called_class())[{{if $moduleName === NULL}}2{{else}}3{{/if}}]);
+		$this->fullClassName = "\Kdyby\Doctrine\\$this->className";
+		$this->entityManager = $entityManager;
+		$this->dataAccessObject = $this->entityManager->getDao($this->fullClassName);
+		$this->itemsPerPage = $itemsPerPage;
+	}
+
+	public function getAll($page, $orderBy, $orderHow, $search) {
+		$table = $this->dataAccessObject->createQueryBuilder()->select($this->className)->from($this->fullClassName, $this->className);
+		if ($search) {
+			$search = explode(' ', $search);
+			$columns = $this->entityManager->getClassMetadata($this->fullClassName)->getFieldNames();
+			$i = 1;
+			foreach ($columns as $column) {
+				foreach ($search as $s) {
+					$table->orWhere("$this->className.$column LIKE ?$i")->setParameter($i, "%$s%");
+					$i++;
+				}
+			}
+		}
+		if ($orderBy && $orderHow) $table->orderBy("$this->className.$orderBy", $orderHow);
+		return $table->setMaxResults($this->itemsPerPage)->setFirstResult(($page - 1) * $this->itemsPerPage)->getQuery()->getResult();
+	}
+
+	public function get($id) {	
+		return $this->objectToArray($this->dataAccessObject->find($id));
+	}
+	
+	private function objectToArray($object) {
+		$array = [];
+		foreach (get_class_methods(get_class($object)) as $method) {
+			if (strpos($method, 'get') !== FALSE && $method !== '__get' && $method !== 'getReflection') {
+				$property = lcfirst(substr($method, 3));
+				$array[$property] = $object->$property;
+			}
+		}
+		return $array;
+	}
+
+	public function save($args) {
+		$args = array_map(function($value) { return ($value === '' || $value === 'NULL') ? NULL : $value; }, $args);
+		$primaryKey = $this->entityManager->getClassMetadata($this->fullClassName)->getSingleIdentifierFieldName();
+		if (isset($args[$primaryKey]) && !empty($args[$primaryKey])) {
+			$entity = $this->dataAccessObject->find($args[$primaryKey]);	
+			foreach ($args as $key => $value) {
+				if ($key === $primaryKey) continue;
+				if (strpos($key, '_id')) {
+					$key = str_replace('_id', '', $key);
+					$keyEntity = '\Kdyby\Doctrine\\' . ucfirst($key);
+					$dao = $this->entityManager->getDao($keyEntity);
+					$entity->$key = $dao->find($value);
+				} else {
+					$key = explode('_', $key);
+					$newKey = '';
+					foreach ($key as $k) $newKey .= ucfirst($k);
+					$newKey = 'set' . $newKey;
+					$entity->$newKey($value);
+				}
+			}
+		} else {
+			$entity = new $this->fullClassName();
+			foreach ($args as $key => $value) {
+				if ($key === $primaryKey) continue;
+				if (strpos($key, '_id')) {
+					$key = str_replace('_id', '', $key);
+					$keyEntity = '\Kdyby\Doctrine\\' . ucfirst($key);	
+					$dao = $this->entityManager->getDao($keyEntity);
+					$entity->$key = $dao->find($value);
+				} else $entity->$key = $value;
+			}
+		}
+		try {
+			$this->dataAccessObject->save($entity);
+		} catch(\Kdyby\Doctrine\DuplicateEntryException $e) {
+			$pdo = new \PDOException($e->getPrevious()->getPrevious()->getMessage(), $e->getPrevious()->getPrevious()->getCode());
+			$pdo->errorInfo = $e->getPrevious()->getPrevious()->errorInfo;
+			throw $pdo;
+		}
+		return $entity;
+	}
+
+	public function remove($id) {
+		try {
+			$this->dataAccessObject->delete($this->dataAccessObject->find($id));
+		} catch (\Kdyby\Doctrine\DBALException $e) {
+			$pdo = new \PDOException($e->getPrevious()->getPrevious()->getMessage(), $e->getPrevious()->getPrevious()->getCode());
+			$pdo->errorInfo = $e->getPrevious()->getPrevious()->errorInfo;
+			throw $pdo;
+		}
+	}
+
+	public function getPagesCount($search) {
+		$query = $this->dataAccessObject->createQueryBuilder()->select("COUNT($this->className)")->from($this->fullClassName, $this->className);
+		if ($search) {
+			$search = explode(' ', $search);
+			$columns = $this->entityManager->getClassMetadata($this->fullClassName)->getFieldNames();
+			$i = 1;
+			foreach ($columns as $column) {
+				foreach ($search as $s) {
+					$query->orWhere("$this->className.$column LIKE ?$i")->setParameter($i, "%$s%");
+					$i++;
+				}
+			}
+		}
+		return ceil($query->getQuery()->getSingleScalarResult() / $this->itemsPerPage);
+	}
+}

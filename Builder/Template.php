@@ -1,50 +1,28 @@
-<?php
-namespace Builder;
-
+<?php namespace Builder;
 /**
  * Template building class
  * @author Radek Brůha
- * @version 1.0
+ * @version 1.1
  */
-class Template {
-    private $template;
-	private $path;
-    
-    /** @param string $path Path to Nette app folder */
-	public function __construct($path = '\..\..\..\..\app') {
-		$this->template = new \Nette\Templating\FileTemplate(__DIR__ . '\..\Templates\Template.latte');
-		$this->template->registerFilter(new \Nette\Latte\Engine);
-		$this->path = __DIR__ . $path;
-	}
-
+class Template extends Base {
 	/**
 	 * Build and save template
-	 * @param string $templateName Template name
-	 * @param string $moduleName Module name
-	 * @param string $columns Table columns
-	 * @param array $table Table name
+	 * @param \Utils\Object\Table $table
+	 * @param \stdClass $settings
+	 * @throws \FileException
 	 */
-	public function build($templateName, $moduleName, $columns, $table) {
-		$path = $moduleName ? "$this->path\\{$moduleName}Module\\templates\\{$templateName}\list.latte" : "$this->path\\templates\\{$templateName}\list.latte";
-		if (!is_dir(dirname($path))) if (!mkdir(dirname($path), 0777, TRUE)) throw new \FileException("Cannot create path $path.");
-		$this->template->name = $table->comment ? $table->comment : $table->name;
-		$this->template->columns = array();
-		$this->template->count = count($columns) + 1;
-		
-		foreach ($columns as $column) {
-			$newColumn = new \stdClass();
-			if (is_object($column->key) && $column->key->name === 'primary') $this->template->primary = $column->name;
-			if (is_object($column->key) && $column->key->name === 'foreign') {
-				$newColumn->title = $column->comment ? $column->comment : $column->name;
-				$newColumn->originalName = $column->name;
+	public function build(\Utils\Object\Table $table, \stdClass $settings) {
+		$this->sourcePath = "\\..\\Templates\\$settings->templateName\\Template\\Template.latte";
+		$this->destinationPath = $settings->moduleName ? __DIR__ . "\\$this->projectPath\\{$settings->moduleName}Module\\templates\\{$table->sanitizedName}\\list.latte" : __DIR__ . "\\$this->projectPath\\templates\\{$table->sanitizedName}\\list.latte";
+		if (!is_dir(dirname($this->destinationPath))) if (!mkdir(dirname($this->destinationPath), 0777, TRUE)) throw new \FileException("Cannot create path $this->destinationPath.");
+		foreach ($table->columns as $column) {
+			if ($column->key instanceof \Utils\Object\Key\Primary) $this->params['primaryKey'] = $column->name;
+			if ($column->key instanceof \Utils\Object\Key\Foreign) {
 				//Possible bug if column is NULL: {if $i->user->fetch()}{$i->user->name}{else}{$i->user}{/if}
-				$newColumn->name = $column->key->table . '->' . $column->key->column_value;
-            } else {
-				$newColumn->title = $column->comment ? $column->comment : $column->name;
-				$newColumn->name = $newColumn->originalName = $column->name;
+				$column->foreignName = $column->key->table . '->' . $column->key->value;
 			}
-			$this->template->columns[] = $newColumn;
 		}
-		$this->template->save($path);
+		$this->params['table'] = $table;
+		$this->saveTemplate();
 	}
 }

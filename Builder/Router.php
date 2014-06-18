@@ -1,32 +1,20 @@
-<?php
-namespace Builder;
-
+<?php namespace Builder;
 /**
  * Router building class
  * @author Radek Brůha
- * @version 1.0
+ * @version 1.1
  */
-class Router {
-	private $template;
-	private $path;
-
-	/** @param string $path Path to Nette app folder */
-	public function __construct($path = '\..\..\..\..\app') {
-		$this->template = new \Nette\Templating\FileTemplate(__DIR__ . '\..\Templates\Router.latte');
-		$this->template->registerFilter(new \Nette\Latte\Engine);
-		$this->template->php = '<?php';
-		$this->path = __DIR__ . $path;
-	}
-	
+class Router extends Base {
 	/**
 	 * Build and save router
-	 * @param string $routerName Router name
-	 * @param string $moduleName Module name
+	 * @param array of \Utils\Object\Table $tables
+	 * @param \stdClass $settings
 	 */
-	public function build($routerName, $moduleName) {
-		$path = "$this->path\\router\RouterFactory.php";
-		$this->template->routerName = ucfirst($routerName);
-		$this->template->moduleName = $moduleName ? $moduleName : NULL;
-		$this->template->save($path);
+	public function build(array $tables, \stdClass $settings) {
+		$this->sourcePath = "\\..\\Templates\\$settings->templateName\\Router\\Router.latte";
+		$this->destinationPath = __DIR__ . "\\$this->projectPath\\router\\RouterFactory.php";
+		$this->params['routerName'] = $tables[0]->sanitizedName;
+		$this->params['moduleName'] = $settings->moduleName;
+		$this->saveTemplate();
 	}
 }

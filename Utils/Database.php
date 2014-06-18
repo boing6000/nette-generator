@@ -7,10 +7,10 @@ namespace Utils;
  * @version 1.0
  */
 class Database extends \MySQLi {
-	private $hostname;
-	private $username;
-	private $password;
-	private $database;
+	public $hostname;
+	public $username;
+	public $password;
+	public $database;
 
 	/**
 	 * Database connect
@@ -45,27 +45,62 @@ class Database extends \MySQLi {
 	 * Build MySQL database tables from Doctrine2 entities
 	 * @throws \DatabaseException
 	 */
-	public function buildFromEntities() {
-		(new \Doctrine\Common\ClassLoader('Doctrine', __DIR__))->register();
-		$config = new \Doctrine\ORM\Configuration();
-		$config->setMetadataDriverImpl($config->newDefaultAnnotationDriver());
+	public function buildFromEntities($settings) {
+		$database = ['dbname' => $this->database, 'user' => $this->username, 'password' => $this->password, 'host' => $this->hostname, 'driver' => 'pdo_mysql'];
+		$metadata = [];
+
+		$config = new \Doctrine\ORM\Configuration;
+		$config->setMetadataDriverImpl($config->newDefaultAnnotationDriver(__DIR__ . '\..\..\..\..\app\models\Entities'));
 		$config->setMetadataCacheImpl(new \Doctrine\Common\Cache\ArrayCache);
-		$config->setProxyDir(__DIR__ . '/Proxies');
-		$config->setProxyNamespace('Proxies');
+		$config->setProxyDir(__DIR__ . '\Utils\Proxy');
+		$config->setProxyNamespace('Proxy');
 
-		$entityManager = \Doctrine\ORM\EntityManager::create(array(
-					'host' => $this->hostname, 'user' => $this->username,
-					'password' => $this->password, 'dbname' => $this->database,
-					'driver' => 'pdo_mysql'), $config);
+
+		$entityManager = \Doctrine\ORM\EntityManager::create($database, $config);
+		$entityManager->getConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('set', 'string');
+		$entityManager->getConnection()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
+		$metadataFactory = new \Doctrine\ORM\Tools\DisconnectedClassMetadataFactory();
+		$metadataFactory->setEntityManager($entityManager);
+		foreach (\Utils\File::getDirectoryFiles(__DIR__ . '\..\..\..\..\app\models\Entities\\') as $class)
+				$metadata[] = $entityManager->getClassMetadata(str_replace('.php', '', "$class"));
+				//$metadata[] = $metadataFactory->getMetadataFor(str_replace('.php' , '', $class));
+		
+
 		$databaseBuilder = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
+		try {
+		$databaseBuilder->createSchema($metadata);
+		} catch (\Doctrine\ORM\Tools\ToolsException $e) {
+					//throw new \DatabaseException($e->getMessage());
+					throw new \DatabaseException($e->getPrevious()->getPrevious()->getMessage(), $e->getPrevious()->getPrevious()->errorInfo[1], $e);
+				}
+		exit;
+		
+		
+		
+		
+		
+		
+		$config = new \Doctrine\ORM\Configuration;
+		$config->setMetadataDriverImpl($config->newDefaultAnnotationDriver([__DIR__ . '\..\..\..\..\app\models\Entities']));
+		$config->setMetadataCacheImpl(new \Doctrine\Common\Cache\ArrayCache);
+		$config->setProxyDir(__DIR__ . '\Utils\Proxy');
+		$config->setProxyNamespace('Proxy');
+	
+		
+		$entityManager = \Doctrine\ORM\EntityManager::create($database, $config);
+		$databaseBuilder = new \Doctrine\ORM\Tools\SchemaTool($entityManager);
+		
 
-		$files = scandir(__DIR__ . '\..\..\..\..\app\model\Entities\\');
+		
+		$files = scandir(__DIR__ . '\..\..\..\..\app\models\Entities\\');
 		foreach ($files as $file) {
 			if ($file !== '.' && $file !== '..') {
-				require_once __DIR__ . '\..\..\..\..\app\model\Entities\\' . $file;
+				require_once __DIR__ . '\..\..\..\..\app\models\Entities\\' . $file;
+				dump(realpath(__DIR__ . '\..\..\..\..\app\models\Entities\\' . $file)); 
 				try {
-					$databaseBuilder->createSchema(array($entityManager->getClassMetadata(str_replace('.php', '', $file))));
+					$databaseBuilder->createSchema([$entityManager->getClassMetadata(str_replace('.php', '', "\\Kdyby\Doctrine\\$file"))]);
 				} catch (\Doctrine\ORM\Tools\ToolsException $e) {
+					//throw new \DatabaseException($e->getMessage());
 					throw new \DatabaseException($e->getPrevious()->getPrevious()->getMessage(), $e->getPrevious()->getPrevious()->errorInfo[1], $e);
 				}
 			}
