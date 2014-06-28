@@ -1,6 +1,5 @@
 {
     "name": "r-bruha/nette-generator",
-	"version": "0.9.0",
     "require": {
 		"php": ">=5.4.0",
 		"kdyby/doctrine": "~2.0"
